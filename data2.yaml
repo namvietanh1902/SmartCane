@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 4
+names: ["Car", "Motorcycle", "Person", "Stairs"]
+
+roboflow:
+  workspace: pbl5-hlrki
+  project: obstacle-detector
+  version: 2
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/pbl5-hlrki/obstacle-detector/dataset/2

@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 4
+names: ['Bicycle', 'Car', 'Motorcycle', 'Person']
+
+roboflow:
+  workspace: pbl5-hlrki
+  project: traffic-detection-bm1ec
+  version: 3
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/pbl5-hlrki/traffic-detection-bm1ec/dataset/3
