@@ -2,6 +2,10 @@ import numpy as np
 import cv2
 import yaml
 from yaml import SafeLoader
+from imutils.video import VideoStream
+from imutils.video import FPS
+import imutils
+import time
 INPUT_WIDTH = 640
 INPUT_HEIGHT = 640
 SCORE_THRESHOLD = 0.5
@@ -33,18 +37,21 @@ class YOLO_Process:
             data = list(yaml.load_all(f, Loader=SafeLoader))
             return data[0]['names']
     def process_img(self,frame):
-
+        object_names = []
         inputImage = format_yolov5(frame)
         outs = self.predict(inputImage)
 
         class_ids, confidences, boxes = wrap_detection(inputImage, outs[0])
 
         for (classid, confidence, box) in zip(class_ids, confidences, boxes):
+            class_name = self.classes[classid]
             color = colors[int(classid) % len(colors)]
             cv2.rectangle(frame, box, color, 2)
             cv2.rectangle(frame, (box[0], box[1] - 20), (box[0] + box[2], box[1]), color, -1)
-            cv2.putText(frame, self.classes[classid]+": "+str(round(confidence,2)), (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, .5, (0,0,0))
-        return frame
+            cv2.putText(frame, class_name+": "+str(round(confidence,2)), (box[0], box[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, .5, (0,0,0))
+            if (class_name not in object_names):
+                object_names.append(class_name)
+        return object_names,frame
     def process_video(self,video):
             video = cv2.VideoCapture(video)
             while True:
@@ -52,12 +59,28 @@ class YOLO_Process:
                 if frame is None:
                     print("End of stream")
                     break
+                object_names,output = self.process_img(frame)
+                cv2.imshow("output", output)
+                if cv2.waitKey(1) > -1:
+                    print("finished by user")
+        
+                    break
+    def process_stream(self,video):
+            vs = VideoStream(src=0).start()
+            time.sleep(2.0)
+            fps = FPS().start()
+            while True:
+                frame = vs.read()
+                if frame is None:
+                    print("End of stream")
+                    break
+                frame = imutils.resize(frame, width=500)
                 output = self.process_img(frame)
                 cv2.imshow("output", output)
                 if cv2.waitKey(1) > -1:
                     print("finished by user")
                     break
-
+                
 def format_yolov5(frame):
 
     row, col, _ = frame.shape
@@ -100,8 +123,10 @@ def wrap_detection(input_image, output_data):
                 width = int(w * x_factor)
                 height = int(h * y_factor)
                 box = np.array([left, top, width, height])
+           
                 boxes.append(box)
-
+    boxes =np.array(boxes);
+    confidences = np.array(confidences)
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.25, 0.45) 
 
     result_class_ids = []
